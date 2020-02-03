@@ -31,9 +31,52 @@ require('./models/mongo/site');
 mongoose.Promise = global.Promise;
 var connectOptions = { useMongoClient: true, autoIndex: false};
 
+if(process.env.MONGODB_URI == undefined) {
+  console.error("process.env.MONGODB_URI is undefined. You need to provide the mongoDB connection information.");
+}
+
 mongoose.connect(process.env.MONGODB_URI, connectOptions, function(error){
   if(!error){
     console.dir('CONNECTED TO ' + process.env.MONGODB_URI);
+    
+    var Rate = mongoose.model("Rate");
+    var Item = mongoose.model("Item");
+    var Site = mongoose.model("Site");
+
+    // Check if the items are empty, insert mock data
+    Item.count({}, function(err, c) {
+      if(c == 0) {
+        console.dir('No items found in the database. Loading data.');
+        var itemsMock = require('./data/items.json');
+        Item.collection.insertMany(itemsMock, function(err,r) {
+          if(err) {
+            console.error('Error inserting items: ' + err);
+          } else {
+            console.dir('Items loaded.');
+          }
+        });
+      } else {
+        console.dir( c + ' items found in the database. Skipping loading data.');
+      }
+    });
+
+    // Check if the sites are empty, insert mock data
+    Site.count({}, function(err, c) {
+      if(c == 0) {
+        console.dir('No sites found in the database. Loading data.');
+        var sitesMock = require('./data/sites.json');
+        Site.collection.insertMany(sitesMock, function(err,r) {
+          if(err) {
+            console.error('Error inserting sites: ' + err);
+          } else {
+            console.dir('Sites loaded.');
+          }
+        });
+      } else {
+        console.dir( c + ' sites found in the database. Skipping loading data.');
+      }
+    });
+
   }
 });
 
